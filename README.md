@@ -71,14 +71,24 @@ Examples:
 
 This is the focused linear-equation version described at the end of the brief. Quadratics, radicals, variable denominators, systems of equations, graphing, and written instructions are intentionally rejected with helpful messages. Use ordinary keyboard notation rather than LaTeX commands. Inputs are bounded to keep parsing responsive.
 
-## Production build
+## Static production build
 
 ```sh
 npm run build
 npm start
 ```
 
-Open the local URL printed by the production server (normally **http://localhost:8787**). This uses the scaffold’s local Cloudflare Worker runtime; no Cloudflare account or deployment is required. `npm run dev` is the simplest everyday local workflow.
+Open the local URL printed by Vinext. The build emits static HTML, CSS, and JavaScript in `dist/client`, which is the same artifact used by GitHub Pages. `npm run dev` is the simplest everyday local workflow.
+
+## GitHub Pages
+
+The repository includes `.github/workflows/pages.yml`. Pushes to `main` run the checks above, build the static export, and publish it to GitHub Pages. The project site URL is:
+
+```text
+https://ismakh9.github.io/algebra-with-khalid/
+```
+
+The workflow supplies the repository path automatically so the Challenge tab and all assets work from the project URL. GitHub Pages deployment is free for this public repository.
 
 ## Validation
 
@@ -95,7 +105,8 @@ Lint targets the application and tests. The generated shadcn component catalog r
 
 ## Project map
 
-- `app/page.tsx`: solver interface, explanation modes, examples, practice, and local history.
+- `app/solver.tsx`: solver interface, explanation modes, examples, practice, and local history.
+- `app/page.tsx`: static home route wrapper for the solver.
 - `app/globals.css`: responsive layout, visual design, accessible focus states, and reduced-motion support.
 - `lib/solver.ts`: bounded equation parser and exact rational arithmetic using BigInt; no `eval` or language model.
 - `components/math.tsx`: mathematical typography, fractions, and changed-term highlights.

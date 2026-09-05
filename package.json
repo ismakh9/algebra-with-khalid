@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
-    "start": "node scripts/start.mjs",
+    "prepare:pages": "node scripts/prepare-pages.mjs",
+    "start": "vinext start",
     "lint": "oxlint app lib components/math.tsx components/document-link.tsx tests vite.config.ts next.config.ts",
     "format": "oxfmt",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
