@@ -6,7 +6,7 @@ import type { ComponentProps } from 'react';
  */
 export function DocumentLink({ children, href, ...props }: ComponentProps<'a'>) {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-  const pagePath = href === '/challenge' ? '/challenge.html' : href;
+  const pagePath = href === '/challenge' && basePath ? '/challenge.html' : href;
   const url = pagePath?.startsWith('/') && !pagePath.startsWith('//')
     ? `${basePath}${pagePath}`
     : pagePath;
