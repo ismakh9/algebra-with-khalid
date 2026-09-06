@@ -1,10 +1,11 @@
-export const SCHOOL_DOMAIN = 'abaarsoschool.org';
+export const SCHOOL_DOMAINS = ['abaarsoschool.org', 'studentabaarso.org'] as const;
 export const TEACHER_EMAIL = 'kismail@abaarsoschool.org';
 
 export function schoolEmail(value: string): string | null {
   const email = value.trim().toLowerCase();
-  if (email.length > 254 || !/^[a-z0-9](?:[a-z0-9._%+-]*[a-z0-9])?@abaarsoschool\.org$/.test(email)) return null;
-  if (email.split('@')[0].includes('..')) return null;
+  const [name, domain, extra] = email.split('@');
+  if (email.length > 254 || extra !== undefined || !SCHOOL_DOMAINS.some((allowed) => domain === allowed)) return null;
+  if (!/^[a-z0-9](?:[a-z0-9._%+-]*[a-z0-9])?$/.test(name) || name.includes('..')) return null;
   return email;
 }
 
