@@ -1,13 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { schoolEmail, pageUrl } from '../lib/school.ts';
 import { classifyQuestion, evaluateActivity } from '../lib/activity.ts';
 
 void test('school emails reject suffix tricks and normalize valid school accounts', () => {
   assert.equal(schoolEmail(' KIsmail@AbaarsoSchool.org '), 'kismail@abaarsoschool.org');
-  for (const email of ['a@gmail.com', 'a@abaarsoschool.org.evil.com', 'a@evilabaarsoschool.org', 'a@@abaarsoschool.org', 'a..b@abaarsoschool.org', 'a b@abaarsoschool.org', '@abaarsoschool.org']) assert.equal(schoolEmail(email), null, email);
+  assert.equal(schoolEmail(' Student.Name@StudentAbaarso.org '), 'student.name@studentabaarso.org');
+  assert.equal(schoolEmail('student+math@studentabaarso.org'), 'student+math@studentabaarso.org');
+  for (const domain of ['abaarsoschool.org', 'studentabaarso.org']) {
+    for (const email of [`a@${domain}.evil.com`, `a@evil${domain}`, `a@@${domain}`, `a@${domain}@`, `a..b@${domain}`, `a b@${domain}`, `@${domain}`, `a@sub.${domain}`]) assert.equal(schoolEmail(email), null, email);
+  }
+  assert.equal(schoolEmail('a@gmail.com'), null);
   assert.equal(pageUrl('/dashboard', '/algebra-with-khalid'), '/algebra-with-khalid/dashboard.html');
   assert.equal(pageUrl('/login'), '/login');
 });
@@ -31,13 +36,22 @@ void test('database enforces school accounts, isolated records, teacher access a
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,raw_user_meta_data jsonb default '{}');
       create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id));`);
-    await db.exec(await readFile(new URL('../supabase/migrations/202609060001_school_accounts.sql', import.meta.url), 'utf8'));
+    const migrations = new URL('../supabase/migrations/', import.meta.url);
+    for (const migration of (await readdir(migrations)).filter((file) => file.endsWith('.sql')).sort()) {
+      await db.exec(await readFile(new URL(migration, migrations), 'utf8'));
+    }
+    for (const email of ['student@abaarsoschool.org', 'student@studentabaarso.org', 'STUDENT@STUDENTABAARSO.ORG', 'student+math@studentabaarso.org', 'student@gmail.com', 'student@studentabaarso.org.evil.com', 'student@evilstudentabaarso.org', 'student@@studentabaarso.org', 'student..name@studentabaarso.org', 'student@studentabaarso.org@']) {
+      const allowed = !!schoolEmail(email);
+      assert.equal((await db.query<{ allowed: boolean }>('select is_school_email($1) as allowed', [email])).rows[0].allowed, allowed, email);
+      const hook = (await db.query<{ result: { error?: unknown } }>('select before_school_user_created($1::jsonb) as result', [JSON.stringify({ user: { email } })])).rows[0].result;
+      assert.equal(!hook.error, allowed, email);
+    }
     await assert.rejects(db.query('insert into auth.users values ($1,$2,now())', [student, 'student@example.com']), /school.org/);
-    for (const [id, email] of [[student, 'student@abaarsoschool.org'], [other, 'other@abaarsoschool.org'], [teacher, 'kismail@abaarsoschool.org']]) {
+    for (const [id, email] of [[student, 'student@studentabaarso.org'], [other, 'other@abaarsoschool.org'], [teacher, 'kismail@abaarsoschool.org']]) {
       await db.query('insert into auth.users(id,email,email_confirmed_at) values ($1,$2,now())', [id, email]);
       await db.query('insert into auth.sessions values ($1,$1)', [id]);
     }
-    await db.query('insert into auth.users(id,email) values ($1,$2)', [pending, 'pending@abaarsoschool.org']);
+    await db.query('insert into auth.users(id,email) values ($1,$2)', [pending, 'pending@studentabaarso.org']);
     await assert.rejects(db.query('insert into auth.sessions values ($1,$1)', [pending]), /verified school/);
     async function as(role: string, id = '') { await db.exec('reset role'); await db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]); await db.exec(`set role ${role}`); }
     await as('anon');
