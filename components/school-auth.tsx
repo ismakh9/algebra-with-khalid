@@ -163,7 +163,7 @@ export function SchoolLogin({ destination = '/' }: { destination?: '/' | '/dashb
         <span className="school-icon"><Mail size={24} /></span>
         <h2 id="school-login-title">{account ? 'You’re signed in.' : sentTo ? 'Check your school inbox.' : 'Welcome to your classroom.'}</h2>
         {account ? <><p>{account.email}</p><DocumentLink className="primary-button" href={account.role === 'teacher' ? '/dashboard' : '/'}>Continue <ArrowRight size={17} /></DocumentLink><button className="text-button" onClick={() => { void signOut(); }}>Sign out</button></> : <>
-          <p>{sentTo ? `Enter the six-digit code sent to ${sentTo}.` : 'Sign in or create your account with your Abaarso school email. No password to remember.'}</p>
+        <p>{sentTo ? <>Enter the six-digit code sent to {sentTo}. If the email shows a “Confirm your email” link instead, click it once and this page will finish signing you in.</> : 'Sign in or create your account with your Abaarso school email. No password to remember.'}</p>
           {!loading && !configured && <output className="school-notice">School sign-in is being connected. Please check back shortly.</output>}
           <form onSubmit={(event) => { event.preventDefault(); void (sentTo ? verifyCode() : sendCode()); }}>
             {!sentTo ? <><label htmlFor="school-email">School email</label><input id="school-email" name="email" type="email" autoComplete="email" placeholder="your.name@abaarsoschool.org" maxLength={254} required value={email} onChange={(event) => { setEmail(event.target.value); setError(''); }} disabled={busy} /></> : <>
