@@ -38,6 +38,11 @@ jobs:
       - run: npm run build
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # This is Supabase's browser-safe publishable key. It is intentionally
+          # bundled into the static client; database writes stay behind RLS and
+          # the authenticated Edge Function.
+          NEXT_PUBLIC_SUPABASE_URL: https://wduwnrxtswvwphlqfkqi.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_vhHEhgOYX8Ix1aHLBsmcUw_DcoV2_AZ
       - run: npm run prepare:pages
         env:
           PAGES_REPOSITORY: algebra-with-khalid

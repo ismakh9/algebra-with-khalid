@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './school.css';
+import { SchoolAuthProvider } from '@/components/school-auth';
 
 export const metadata: Metadata = {
   title: 'Algebra with Khalid — Every step, explained',
   description:
-    'Make the math make sense. Solve one-variable linear equations with clear steps, helpful explanations, and answer verification. Free, private, and locally runnable.',
+    'Algebra learning for Abaarso School, with clear steps, adaptive challenges, and teacher support.',
 };
 
 export default function RootLayout({
@@ -12,7 +14,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><SchoolAuthProvider>{children}</SchoolAuthProvider></body>
     </html>
   );
 }

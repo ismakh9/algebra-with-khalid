@@ -2,6 +2,7 @@ export const dynamic = 'force-static';
 
 import type { Metadata } from 'next';
 import Challenge from './challenge';
+import { SchoolGate } from '@/components/school-auth';
 
 export const metadata: Metadata = {
   title: 'Challenge — Algebra with Khalid',
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
     'Build your algebra confidence with random equations that get harder each time you answer correctly.',
 };
 export default function ChallengePage() {
-  return <Challenge />;
+  return <SchoolGate><Challenge /></SchoolGate>;
 }

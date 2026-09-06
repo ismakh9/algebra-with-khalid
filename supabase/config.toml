@@ -1,0 +1,31 @@
+project_id = "algebra-with-khalid"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://ismakh9.github.io/algebra-with-khalid/"]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+double_confirm_changes = true
+max_frequency = "60s"
+otp_expiry = 600
+otp_length = 6
+
+[auth.email.template.confirmation]
+subject = "Your Algebra with Khalid verification code"
+content_path = "./supabase/templates/code.html"
+
+[auth.email.template.magic_link]
+subject = "Your Algebra with Khalid verification code"
+content_path = "./supabase/templates/code.html"
+
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/before_school_user_created"
+
+[functions.school-activity]
+# The function validates each user's token with Auth.getUser. This supports
+# Supabase's new publishable keys and asymmetric user JWTs.
+verify_jwt = false

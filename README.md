@@ -26,7 +26,7 @@ npm run dev
 
 Dependencies are already installed here. For a copy on another computer, run `npm ci` first. You can also double-click **Start SolveX.command** on macOS; it installs dependencies if needed and starts the website.
 
-No account, API key, database, environment variables, or paid service is needed. Package installation needs internet access; the app itself performs its math locally and uses no external fonts, CDNs, or math API.
+The hosted version uses Abaarso School email sign-in. Enter an `@abaarsoschool.org` address at `/login.html`; the account and activity data are protected in Supabase. Local math still works without a backend, but sign-in requires the public Supabase settings in `.env.local` (see `.env.example`).
 
 ## How to use it
 
@@ -49,7 +49,11 @@ Open **Challenge** in the top navigation, or visit **http://localhost:3000/chall
 - Levels introduce addition, subtraction, multiplication, two-step equations, negatives, parentheses, variables on both sides, and fractions. Advanced levels add nesting and increase the coefficient range each level.
 - Hints suggest the first operation. Progress is saved separately from solver history, only on this device.
 
-The challenge generator verifies every equation with the exact symbolic solver and avoids repeating the immediately previous equation. Correct submissions can only earn a problem's level once.
+The challenge generator verifies every equation with the exact symbolic solver and avoids repeating the immediately previous equation. Correct submissions can only earn a problem's level once. Signed-in students keep progress in their school account across devices.
+
+## School accounts
+
+Students sign in with a six-digit email verification code. Only `@abaarsoschool.org` addresses are accepted. The teacher dashboard is available at `/dashboard.html` to `kismail@abaarsoschool.org`; it shows verified sign-ins, question topics, submitted equations, and challenge results. Students can see only their own account data.
 
 ## Supported equations
 

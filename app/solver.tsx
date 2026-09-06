@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { DocumentLink } from '@/components/document-link';
+import { AccountMenu, useSchoolAuth } from '@/components/school-auth';
+import { useActivityRecorder } from '@/components/school-activity';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -76,6 +78,9 @@ type Level = 'quick' | 'guided' | 'teach';
 type HistoryItem = { equation: string; answer: string; at: number };
 
 export default function Home() {
+  const { account } = useSchoolAuth();
+  const storageKey = `${STORAGE_KEY}:${account?.id}`;
+  const { record, notice } = useActivityRecorder();
   const [input, setInput] = useState(DEFAULT);
   const [solution, setSolution] = useState<Solution | null>(() =>
     solveEquation(DEFAULT),
@@ -107,7 +112,7 @@ export default function Home() {
   useEffect(() => {
     try {
       const stored: unknown = JSON.parse(
-        localStorage.getItem(STORAGE_KEY) || '[]',
+        localStorage.getItem(storageKey) || '[]',
       );
       if (Array.isArray(stored)) {
         const items = stored
@@ -127,11 +132,12 @@ export default function Home() {
     } catch {
       setHistoryAvailable(false);
     }
-  }, []);
+  }, [storageKey]);
 
   const runSolve = useCallback(
     (equation: string, options?: { all?: boolean; scroll?: boolean }) => {
       setInput(equation);
+      record('solve', equation);
       try {
         const next = solveEquation(equation);
         setSolution(next);
@@ -152,7 +158,7 @@ export default function Home() {
         historyRef.current = items;
         setHistory(items);
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+          localStorage.setItem(storageKey, JSON.stringify(items));
         } catch {
           setHistoryAvailable(false);
         }
@@ -183,7 +189,7 @@ export default function Home() {
         return { ok: false, error: message };
       }
     },
-    [],
+    [record, storageKey],
   );
 
   useEffect(() => {
@@ -246,7 +252,7 @@ export default function Home() {
     historyRef.current = [];
     setHistory([]);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(storageKey);
     } catch {
       setHistoryAvailable(false);
     }
@@ -493,6 +499,8 @@ export default function Home() {
           </button>
         </nav>
       </header>
+      <AccountMenu />
+      {notice}
       <main id="top">
         <section className="hero" aria-labelledby="hero-title">
           <div className="eyebrow">
@@ -681,7 +689,7 @@ export default function Home() {
               )}
               <div className="local-note">
                 {historyAvailable
-                  ? 'Saved only on this device'
+                  ? 'Recent list saved on this device; activity shared with your teacher'
                   : 'History is available for this visit only'}
               </div>
             </div>
@@ -708,7 +716,7 @@ export default function Home() {
         <a className="footer-brand" href="#top">
           Algebra with Khalid<span>Make the math make sense.</span>
         </a>
-        <span>No accounts. Just algebra.</span>
+        <span>Your school account. Your next step.</span>
       </footer>
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
@@ -825,6 +833,7 @@ export default function Home() {
                 className="practice-form"
                 onSubmit={(event) => {
                   event.preventDefault();
+                  record('practice', PRACTICE[practiceIndex], studentStep);
                   setFeedback(
                     checkStudentStep(PRACTICE[practiceIndex], studentStep),
                   );

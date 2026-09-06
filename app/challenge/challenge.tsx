@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { DocumentLink } from '@/components/document-link';
+import { AccountMenu } from '@/components/school-auth';
+import { schoolApi } from '@/lib/backend';
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,17 +21,14 @@ import {
 import { MathText } from '@/components/math';
 import { Progress } from '@/components/ui/progress';
 import {
-  awardCorrectAnswer,
-  checkChallengeAnswer,
-  generateChallenge,
   levelTopic,
-  readProgress,
   type AnswerResult,
   type ChallengeProblem,
   type ChallengeProgress,
 } from '@/lib/challenges';
 
-const STORAGE_KEY = 'solvex:challenge-progress:v1';
+type SchoolChallenge = { id: string; problem: ChallengeProblem; progress: ChallengeProgress };
+type SchoolAnswer = { result: AnswerResult; progress: ChallengeProgress };
 const LADDER = [
   {
     level: 1,
@@ -67,45 +66,53 @@ export default function Challenge() {
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<AnswerResult | null>(null);
   const [showHint, setShowHint] = useState(false);
-  const [storageAvailable, setStorageAvailable] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [problemId, setProblemId] = useState('');
+  const initialRequest = useRef('');
+  const pendingQuestion = useRef('');
+  const pendingAnswer = useRef<{ id: string; answer: string; question: string } | null>(null);
+  const inFlight = useRef(false);
   const answerRef = useRef<HTMLInputElement>(null);
   const completed = feedback?.correct === true;
 
-  /* oxlint-disable react/react-compiler -- Hydrate browser-only progress and generate randomness after SSR. */
   useEffect(() => {
-    let saved = readProgress(null);
-    try {
-      saved = readProgress(localStorage.getItem(STORAGE_KEY));
-    } catch {
-      setStorageAvailable(false);
-    }
-    // oxlint-disable-next-line react/react-compiler -- Hydrate device-local progress and generate randomness only after server rendering.
-    setProgress(saved);
-    setProblem(generateChallenge(saved.level));
+    let active = true;
+    initialRequest.current ||= crypto.randomUUID();
+    // oxlint-disable-next-line react/react-compiler -- Load account-specific progress from the server after hydration.
+    setBusy(true);
+    schoolApi<SchoolChallenge>({ action: 'challenge_new', requestId: initialRequest.current })
+      .then(data => { if (active) { setProblem(data.problem); setProblemId(data.id); setProgress(data.progress); } })
+      .catch(() => { if (active) setError('Could not load your challenge. Check your connection and try again.'); })
+      .finally(() => { if (active) setBusy(false); });
+    return () => { active = false; };
   }, []);
-  /* oxlint-enable react/react-compiler */
 
-  function nextProblem() {
-    setProblem(generateChallenge(progress.level, problem?.equation));
-    setAnswer('');
-    setFeedback(null);
-    setShowHint(false);
-    requestAnimationFrame(() => answerRef.current?.focus());
+  async function nextProblem() {
+    if (busy || inFlight.current) return;
+    inFlight.current = true;
+    pendingQuestion.current ||= !problem ? initialRequest.current : crypto.randomUUID();
+    setBusy(true); setError('');
+    try {
+      const data = await schoolApi<SchoolChallenge>({ action: 'challenge_new', requestId: pendingQuestion.current, previousId: problemId || undefined });
+      setProblem(data.problem); setProblemId(data.id); setProgress(data.progress);
+      setAnswer(''); setFeedback(null); setShowHint(false);
+      pendingQuestion.current = ''; pendingAnswer.current = null;
+      requestAnimationFrame(() => answerRef.current?.focus());
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not load your challenge. Please try again.'); }
+    finally { setBusy(false); inFlight.current = false; }
   }
-  function submitAnswer() {
-    if (!problem || completed) return;
-    const result = checkChallengeAnswer(problem, answer);
-    setFeedback(result);
-    if (result.correct) {
-      const next = awardCorrectAnswer(progress, problem.level);
-      setProgress(next);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        setStorageAvailable(true);
-      } catch {
-        setStorageAvailable(false);
-      }
-    }
+  async function submitAnswer() {
+    if (!problem || completed || busy || inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true); setError('');
+    if (!pendingAnswer.current || pendingAnswer.current.answer !== answer || pendingAnswer.current.question !== problemId)
+      pendingAnswer.current = { id: crypto.randomUUID(), answer, question: problemId };
+    try {
+      const data = await schoolApi<SchoolAnswer>({ action: 'challenge_answer', requestId: pendingAnswer.current.id, questionId: problemId, answer });
+      setFeedback(data.result); setProgress(data.progress); pendingAnswer.current = null;
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save your answer. Please try again.'); }
+    finally { setBusy(false); inFlight.current = false; }
   }
   const activeLevel = problem?.level || progress.level;
   const activeStage = LADDER.reduce(
@@ -143,6 +150,7 @@ export default function Challenge() {
           </DocumentLink>
         </nav>
       </header>
+      <AccountMenu />
       <main className="challenge-main">
         <section className="hero challenge-hero">
           <div className="eyebrow">
@@ -177,6 +185,7 @@ export default function Challenge() {
                 </span>
                 <span>{problem?.topic || levelTopic(progress.level)}</span>
               </div>
+              {error && <div className="school-error" role="alert">{error}{!problem && <button className="text-button" disabled={busy} onClick={() => { void nextProblem(); }}>Try again</button>}</div>}
               {problem ? (
                 <>
                   <div className="challenge-equation" key={problem.equation}>
@@ -187,7 +196,7 @@ export default function Challenge() {
                     className="challenge-answer-form"
                     onSubmit={(event) => {
                       event.preventDefault();
-                      submitAnswer();
+                      void submitAnswer();
                     }}
                   >
                     <label htmlFor="challenge-answer">Your answer</label>
@@ -204,7 +213,7 @@ export default function Challenge() {
                           setFeedback(null);
                         }}
                         placeholder="Enter a number or fraction"
-                        disabled={completed}
+                        disabled={completed || busy}
                         autoComplete="off"
                         autoCapitalize="off"
                         spellCheck={false}
@@ -217,7 +226,7 @@ export default function Challenge() {
                       <button
                         className="primary-button"
                         type="submit"
-                        disabled={completed}
+                        disabled={completed || busy}
                       >
                         {completed ? (
                           <>
@@ -226,7 +235,7 @@ export default function Challenge() {
                           </>
                         ) : (
                           <>
-                            Check answer
+                            {busy ? 'Saving…' : 'Check answer'}
                             <ArrowRight size={17} />
                           </>
                         )}
@@ -267,7 +276,7 @@ export default function Challenge() {
                   )}
                   {completed ? (
                     <div className="next-challenge">
-                      <button className="primary-button" onClick={nextProblem}>
+                      <button className="primary-button" disabled={busy} onClick={() => { void nextProblem(); }}>
                         Next challenge
                         <ArrowRight size={17} />
                       </button>
@@ -284,7 +293,7 @@ export default function Challenge() {
                         <Lightbulb size={15} />
                         {showHint ? 'Hide hint' : 'A little hint'}
                       </button>
-                      <button className="text-button" onClick={nextProblem}>
+                      <button className="text-button" disabled={busy} onClick={() => { void nextProblem(); }}>
                         <Shuffle size={15} />
                         Different problem, same level
                       </button>
@@ -378,9 +387,7 @@ export default function Challenge() {
               </ol>
             </div>
             <p className="challenge-storage-note">
-              {storageAvailable
-                ? 'Your progress is saved on this device.'
-                : 'Your progress is saved for this visit.'}
+              Your progress is saved to your school account, across devices.
             </p>
           </aside>
         </div>
@@ -393,7 +400,7 @@ export default function Challenge() {
         <DocumentLink href="/" className="footer-brand">
           Algebra with Khalid<span>Make the math make sense.</span>
         </DocumentLink>
-        <span>No accounts. Just algebra.</span>
+        <span>Your school account. Your next step.</span>
       </footer>
     </div>
   );
