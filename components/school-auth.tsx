@@ -82,7 +82,7 @@ export function AccountMenu() {
 export function SchoolGate({ children, teacher = false }: { children: ReactNode; teacher?: boolean }) {
   const { account, loading } = useSchoolAuth();
   if (loading) return <output className="school-loading">Checking your school account…</output>;
-  if (!account) return <SchoolLogin destination={teacher ? '/dashboard' : '/'} />;
+  if (!account) return <SchoolLogin />;
   if (teacher && account.role !== 'teacher') return <div className="school-auth-shell"><SchoolBrand /><section className="school-card">
     <ShieldCheck className="school-icon" /><h1>Teacher access only.</h1>
     <p>Your student account is ready for the solver and challenges.</p><DocumentLink className="primary-button" href="/">Back to learning <ArrowRight size={17} /></DocumentLink>
@@ -91,7 +91,7 @@ export function SchoolGate({ children, teacher = false }: { children: ReactNode;
   return <>{children}</>;
 }
 
-export function SchoolLogin({ destination = '/' }: { destination?: '/' | '/dashboard' }) {
+export function SchoolLogin() {
   const { account, configured, loading, error: accountError, refresh, signOut } = useSchoolAuth();
   const [email, setEmail] = useState('');
   const [sentTo, setSentTo] = useState('');
@@ -146,8 +146,9 @@ export function SchoolLogin({ destination = '/' }: { destination?: '/' | '/dashb
       await refresh();
       const { data: profile, error: profileError } = await backend.rpc('get_school_account');
       if (profileError || !profile) throw new Error('Account unavailable');
-      const route = profile.role === 'teacher' ? '/dashboard' : destination;
-      window.location.assign(pageUrl(route, process.env.NEXT_PUBLIC_BASE_PATH ?? ''));
+      // Verification always finishes at the learning landing page. Teachers
+      // can open their dashboard from the account menu after signing in.
+      window.location.assign(pageUrl('/', process.env.NEXT_PUBLIC_BASE_PATH ?? ''));
     } catch { setError('That code is invalid or has expired. Check the latest email or request another code.'); }
     finally { setBusy(false); }
   }
@@ -162,7 +163,7 @@ export function SchoolLogin({ destination = '/' }: { destination?: '/' | '/dashb
       <section className="school-card" aria-labelledby="school-login-title">
         <span className="school-icon"><Mail size={24} /></span>
         <h2 id="school-login-title">{account ? 'You’re signed in.' : sentTo ? 'Check your school inbox.' : 'Welcome to your classroom.'}</h2>
-        {account ? <><p>{account.email}</p><DocumentLink className="primary-button" href={account.role === 'teacher' ? '/dashboard' : '/'}>Continue <ArrowRight size={17} /></DocumentLink><button className="text-button" onClick={() => { void signOut(); }}>Sign out</button></> : <>
+        {account ? <><p>{account.email}</p><DocumentLink className="primary-button" href="/">Continue <ArrowRight size={17} /></DocumentLink><button className="text-button" onClick={() => { void signOut(); }}>Sign out</button></> : <>
         <p>{sentTo ? <>Enter the six-digit code sent to {sentTo}. If the email shows a “Confirm your email” link instead, click it once and this page will finish signing you in.</> : 'Sign in or create your account with your Abaarso school email. No password to remember.'}</p>
           {!loading && !configured && <output className="school-notice">School sign-in is being connected. Please check back shortly.</output>}
           <form onSubmit={(event) => { event.preventDefault(); void (sentTo ? verifyCode() : sendCode()); }}>
