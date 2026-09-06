@@ -104,6 +104,19 @@ export function SchoolLogin() {
     const timer = setTimeout(() => setSeconds((value) => Math.max(value - 1, 0)), 1000);
     return () => clearTimeout(timer);
   }, [seconds]);
+  // A confirmation email can be generated before a deployment has refreshed
+  // its redirect settings. If Supabase sends that link back to /login.html,
+  // the session is still valid; finish the same sign-in flow automatically.
+  useEffect(() => {
+    if (!account || typeof window === 'undefined') return;
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+    const loginPath = pageUrl('/login', basePath);
+    const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+    const normalizedLoginPath = loginPath.replace(/\/$/, '') || '/';
+    if (currentPath === normalizedLoginPath || currentPath.endsWith('/login.html')) {
+      window.location.replace(pageUrl('/', basePath));
+    }
+  }, [account]);
   async function sendCode() {
     const normalized = schoolEmail(email);
     if (!normalized) { setError('Please use an email ending in @abaarsoschool.org.'); return; }
