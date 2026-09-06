@@ -119,7 +119,7 @@ export function SchoolLogin() {
   }, [account]);
   async function sendCode() {
     const normalized = schoolEmail(email);
-    if (!normalized) { setError('Please use an email ending in @abaarsoschool.org.'); return; }
+    if (!normalized) { setError('Please use an email ending in @abaarsoschool.org or @studentabaarso.org.'); return; }
     const backend = getBackend();
     if (!backend || busy || seconds) return;
     setError(''); setBusy(true);
@@ -180,7 +180,7 @@ export function SchoolLogin() {
         <p>{sentTo ? <>Enter the six-digit code sent to {sentTo}. If the email shows a “Confirm your email” link instead, click it once and this page will finish signing you in.</> : 'Sign in or create your account with your Abaarso school email. No password to remember.'}</p>
           {!loading && !configured && <output className="school-notice">School sign-in is being connected. Please check back shortly.</output>}
           <form onSubmit={(event) => { event.preventDefault(); void (sentTo ? verifyCode() : sendCode()); }}>
-            {!sentTo ? <><label htmlFor="school-email">School email</label><input id="school-email" name="email" type="email" autoComplete="email" placeholder="your.name@abaarsoschool.org" maxLength={254} required value={email} onChange={(event) => { setEmail(event.target.value); setError(''); }} disabled={busy} /></> : <>
+            {!sentTo ? <><label htmlFor="school-email">School email</label><input id="school-email" name="email" type="email" autoComplete="email" placeholder="your.name@studentabaarso.org" aria-describedby="school-email-domains" maxLength={254} required value={email} onChange={(event) => { setEmail(event.target.value); setError(''); }} disabled={busy} /><p id="school-email-domains" className="school-form-hint">Use your @abaarsoschool.org or @studentabaarso.org email.</p></> : <>
               <label htmlFor="school-code">Verification number</label><input id="school-code" className="school-code" name="one-time-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} placeholder="000000" required value={code} onChange={(event) => { setCode(event.target.value.replace(/\D/g, '').slice(0,6)); setError(''); }} disabled={busy} />
               <p className="school-form-hint">Use the latest code. It expires in 10 minutes and works only once.</p>
             </>}
