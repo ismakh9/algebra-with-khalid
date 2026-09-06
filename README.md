@@ -26,7 +26,7 @@ npm run dev
 
 Dependencies are already installed here. For a copy on another computer, run `npm ci` first. You can also double-click **Start SolveX.command** on macOS; it installs dependencies if needed and starts the website.
 
-The hosted version uses Abaarso School email sign-in. Enter an `@abaarsoschool.org` address at `/login.html`; the account and activity data are protected in Supabase. Local math still works without a backend, but sign-in requires the public Supabase settings in `.env.local` (see `.env.example`).
+The hosted version uses Abaarso School email sign-in. Enter an `@abaarsoschool.org` or `@studentabaarso.org` address at `/login.html`; the account and activity data are protected in Supabase. Local math still works without a backend, but sign-in requires the public Supabase settings in `.env.local` (see `.env.example`).
 
 ## How to use it
 
@@ -53,7 +53,7 @@ The challenge generator verifies every equation with the exact symbolic solver a
 
 ## School accounts
 
-Students sign in with a six-digit email verification code. Only `@abaarsoschool.org` addresses are accepted. The teacher dashboard is available at `/dashboard.html` to `kismail@abaarsoschool.org`; it shows verified sign-ins, question topics, submitted equations, and challenge results. Students can see only their own account data.
+Students sign in with a six-digit email verification code. Both `@abaarsoschool.org` and `@studentabaarso.org` addresses are accepted. The teacher dashboard is available at `/dashboard.html` to `kismail@abaarsoschool.org`; it shows verified sign-ins, question topics, submitted equations, and challenge results. Students can see only their own account data.
 
 ## Supported equations
 
