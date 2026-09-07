@@ -4,10 +4,13 @@ project_id = "algebra-with-khalid"
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://ismakh9.github.io/algebra-with-khalid/"]
 enable_signup = true
+minimum_password_length = 8
 
 [auth.email]
 enable_signup = true
-enable_confirmations = true
+# Temporary school password signup while transactional email is unavailable.
+# Domains are checked by the database hook; mailbox ownership is not verified.
+enable_confirmations = false
 double_confirm_changes = true
 max_frequency = "60s"
 otp_expiry = 600
