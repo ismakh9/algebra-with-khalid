@@ -36,6 +36,9 @@ void test('database enforces school accounts, isolated records, teacher access a
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,raw_user_meta_data jsonb default '{}');
       create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id));`);
+    // The deployment already has a verified teacher. Pin that identity when
+    // migrating; do not automatically grant a later signup the teacher role.
+    await db.query('insert into auth.users(id,email,email_confirmed_at) values ($1,$2,now())', [teacher, 'kismail@abaarsoschool.org']);
     const migrations = new URL('../supabase/migrations/', import.meta.url);
     for (const migration of (await readdir(migrations)).filter((file) => file.endsWith('.sql')).sort()) {
       await db.exec(await readFile(new URL(migration, migrations), 'utf8'));
@@ -48,7 +51,7 @@ void test('database enforces school accounts, isolated records, teacher access a
     }
     await assert.rejects(db.query('insert into auth.users values ($1,$2,now())', [student, 'student@example.com']), /school.org/);
     for (const [id, email] of [[student, 'student@studentabaarso.org'], [other, 'other@abaarsoschool.org'], [teacher, 'kismail@abaarsoschool.org']]) {
-      await db.query('insert into auth.users(id,email,email_confirmed_at) values ($1,$2,now())', [id, email]);
+      await db.query('insert into auth.users(id,email,email_confirmed_at) values ($1,$2,now()) on conflict(id) do nothing', [id, email]);
       await db.query('insert into auth.sessions values ($1,$1)', [id]);
     }
     await db.query('insert into auth.users(id,email) values ($1,$2)', [pending, 'pending@studentabaarso.org']);
@@ -92,6 +95,17 @@ void test('database enforces school accounts, isolated records, teacher access a
     await as('authenticated', pending);
     assert.equal((await db.query('select * from student_profiles')).rows.length, 0);
     await as('postgres');
+    // With confirmation disabled Auth auto-confirms password accounts. Even
+    // such an account claiming the teacher email must not gain dashboard access.
+    await db.query('update auth.users set email=$2 where id=$1', [teacher, 'teacher.old@abaarsoschool.org']);
+    await db.query('update auth.users set email=$2 where id=$1', [other, 'kismail@abaarsoschool.org']);
+    await as('authenticated', other);
+    assert.equal((await db.query<{ teacher: boolean }>('select is_teacher() as teacher')).rows[0].teacher, false);
+    await assert.rejects(db.query('select teacher_dashboard()'), /Teacher access/);
+    assert.equal((await db.query('select * from student_profiles')).rows.length, 1);
+    await as('postgres');
+    await db.query('update auth.users set email=$2 where id=$1', [other, 'other@abaarsoschool.org']);
+    await db.query('update auth.users set email=$2 where id=$1', [teacher, 'kismail@abaarsoschool.org']);
     await db.query('update auth.users set email_confirmed_at=null where id=$1', [teacher]);
     await as('authenticated', teacher);
     await assert.rejects(db.query('select teacher_dashboard()'), /Teacher access/);
