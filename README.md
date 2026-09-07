@@ -53,7 +53,13 @@ The challenge generator verifies every equation with the exact symbolic solver a
 
 ## School accounts
 
-Students sign in with a six-digit email verification code. Both `@abaarsoschool.org` and `@studentabaarso.org` addresses are accepted. The teacher dashboard is available at `/dashboard.html` to `kismail@abaarsoschool.org`; it shows verified sign-ins, question topics, submitted equations, and challenge results. Students can see only their own account data.
+Students can create an account with their school email and a separate website password (at least eight characters), then sign in without an email code. Both `@abaarsoschool.org` and `@studentabaarso.org` addresses are accepted. Use a different password from the school Google account. Email confirmation is temporarily disabled while Brevo activates transactional email; the domain is enforced by the database, but mailbox ownership is not verified.
+
+The teacher dashboard is available at `/dashboard.html` to the existing `kismail@abaarsoschool.org` account; access is pinned to its user ID in `private.teachers`, not granted by an email claim alone. It shows sign-ins, question topics, submitted equations, and challenge results. Students can see only their own account data. Passwords are managed by Supabase Auth and are not saved in activity records or shown in the dashboard.
+
+Existing email-code users should open **Set password** on a device where they are still signed in. A logged-out user cannot take over an existing account by signing up again; users without a password or with forgotten passwords must contact Khalid while email recovery is unavailable. Existing sessions and email-link callbacks remain supported.
+
+For deployment, apply all SQL migrations before disabling **Confirm email** under Supabase Authentication → Sign In / Providers. Keep Email enabled, set the minimum password length to 8, and leave email-change confirmation enabled. On a fresh backend, explicitly assign the teacher's existing Auth user ID to `private.teachers.user_id`; the migration never grants a future account admin access automatically.
 
 ## Supported equations
 
