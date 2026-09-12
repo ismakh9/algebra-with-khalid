@@ -27,7 +27,7 @@ function intersect(a: Interval, b: Interval): Interval | null {
   };
   return valid(i) ? i : null;
 }
-function union(intervals: Interval[]): Interval[] {
+export function normalizeIntervals(intervals: Interval[]): Interval[] {
   const sorted = intervals.map(i => ({ ...i })).sort((a, b) => !a.lower ? -1 : !b.lower ? 1 : compare(a.lower, b.lower) || Number(b.lowerClosed) - Number(a.lowerClosed));
   const result: Interval[] = [];
   for (const i of sorted) {
@@ -89,7 +89,7 @@ export function solveInequality(raw: string): InequalitySolution {
     }
     groups.push(...current);
   }
-  const intervals = union(groups);
+  const intervals = normalizeIntervals(groups);
   const interval = intervalNotation(intervals);
   if (pairCount > 1) steps.push({ title: 'Combine the solution sets', math: interval, explanation: 'For chained bounds and “and”, keep values satisfying every condition. For “or”, include values satisfying either condition.' });
   return { input: raw.trim(), variable, intervals, interval, steps };

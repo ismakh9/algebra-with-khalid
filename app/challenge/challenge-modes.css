@@ -1,0 +1,10 @@
+.challenge-modes .challenge-mode-buttons { width: min(100%, 430px); height: auto; padding: 5px; margin: 0 auto 24px; background: #eeebf6; border: 1px solid #e1dbea; border-radius: 12px; }
+.challenge-mode-buttons [data-slot='tabs-trigger'] { min-height: 46px; padding: 10px 22px; font-size: 16px; color: #695a7c; }
+.challenge-mode-buttons [data-active] { background: #fff; color: #6645a1; box-shadow: 0 2px 6px #44236612; }
+.inequality-challenge-expression { font: 30px/1.8 Georgia, serif; color: #6d4f86; margin: 14px 0 0; overflow-wrap: anywhere; }
+.inequality-challenge-solution { padding: 0 25px; }
+.inequality-challenge-solution h3 { font-size: 21px; color: #34755b; overflow-wrap: anywhere; }
+.inequality-practice .challenge-answer-row > input { font: 18px/1.7 var(--font-sans); }
+.inequality-practice .challenge-answer-form > p { font-size: 14px; }
+.challenge-modes [data-slot='tabs-content'][hidden] { display: none; }
+@media (max-width: 640px) { .inequality-challenge-expression { font-size: 25px; } }

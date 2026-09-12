@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import InequalityPractice from './inequality-practice';
+import './challenge-modes.css';
 import { DocumentLink } from '@/components/document-link';
 import { AccountMenu } from '@/components/school-auth';
 import { schoolApi } from '@/lib/backend';
@@ -58,6 +61,7 @@ const LADDER = [
 ];
 
 export default function Challenge() {
+  const [inequalitiesOpened, setInequalitiesOpened] = useState(false);
   const [progress, setProgress] = useState<ChallengeProgress>({
     level: 1,
     correct: 0,
@@ -161,8 +165,14 @@ export default function Challenge() {
             <br />
             <span>With every challenge.</span>
           </h1>
-          <p>A fresh equation. A new level. Your own pace.</p>
+          <p>A fresh challenge. A new level. Your own pace.</p>
         </section>
+        <Tabs defaultValue="equations" className="challenge-modes" onValueChange={value => { if (value === 'inequalities') setInequalitiesOpened(true); }}>
+          <TabsList aria-label="Choose challenge type" className="challenge-mode-buttons">
+            <TabsTrigger value="equations">Equations</TabsTrigger>
+            <TabsTrigger value="inequalities">Inequalities</TabsTrigger>
+          </TabsList>
+          <TabsContent value="equations" keepMounted>
         <div className="challenge-layout">
           <section
             className="challenge-column"
@@ -391,6 +401,9 @@ export default function Challenge() {
             </p>
           </aside>
         </div>
+          </TabsContent>
+          <TabsContent value="inequalities" keepMounted>{inequalitiesOpened && <InequalityPractice />}</TabsContent>
+        </Tabs>
         <div className="bottom-note">
           <span className="status-dot" />
           Progress comes from practice, not perfection.

@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.115.0';
+import { generateInequalityChallenge, checkInequalityAnswer } from '../../../lib/inequality-challenges.ts';
 import { schoolEmail } from '../../../lib/school.ts';
 import { evaluateActivity } from '../../../lib/activity.ts';
 import { generateChallenge, checkChallengeAnswer, type ChallengeProblem } from '../../../lib/challenges.ts';
@@ -42,6 +43,34 @@ Deno.serve(async (request: Request) => {
       const { error } = await admin.rpc('save_school_activity', { p_user: user.id, p_request: body.requestId, p_kind: body.kind, p_equation: body.equation, p_topic: graded.topic, p_answer: body.answer ?? null, p_correct: graded.correct, p_result: graded.result });
       if (error) throw error;
       return reply({ saved: true });
+    }
+    if (body.action === 'inequality_new') {
+      const { data: progress, error: progressError } = await admin.from('inequality_progress').select('level,correct').eq('user_id', user.id).maybeSingle();
+      if (progressError) throw progressError;
+      let previous = '';
+      if (body.previousId !== undefined) {
+        if (typeof body.previousId !== 'string' || !uuid.test(body.previousId)) return reply({ error: 'Invalid challenge.' }, 400);
+        const { data } = await admin.from('challenge_questions').select('equation').eq('user_id', user.id).eq('id', body.previousId).maybeSingle();
+        previous = data?.equation ?? '';
+      }
+      const generated = generateInequalityChallenge(progress?.level ?? 1, previous);
+      const { data, error } = await admin.rpc('create_inequality_challenge', { p_user: user.id, p_request: body.requestId, p_equation: generated.equation, p_topic: generated.topic, p_level: generated.level });
+      if (error) throw error;
+      return reply({ id: data.question.id, problem: { equation: data.question.equation, topic: data.question.topic, level: data.question.level }, progress: data.progress });
+    }
+    if (body.action === 'inequality_answer') {
+      if (typeof body.questionId !== 'string' || !uuid.test(body.questionId) || typeof body.answer !== 'string' || body.answer.length > 240) return reply({ error: 'Invalid answer.' }, 400);
+      const { data: question, error: questionError } = await admin.from('challenge_questions').select('equation,topic,level').eq('id', body.questionId).eq('user_id', user.id).maybeSingle();
+      if (questionError) throw questionError;
+      if (!question || !question.topic.startsWith('Inequalities:')) return reply({ error: 'Challenge not found for your account.' }, 404);
+      const { data: existing, error: existingError } = await admin.from('activity_events').select('answer,question_id,kind').eq('user_id', user.id).eq('request_id', body.requestId).maybeSingle();
+      if (existingError) throw existingError;
+      if (existing && (existing.kind !== 'challenge_answer' || existing.question_id !== body.questionId)) return reply({ error: 'Request ID already used.' }, 409);
+      const answer = existing?.answer ?? body.answer;
+      const result = checkInequalityAnswer(question.equation, answer);
+      const { data: progress, error } = await admin.rpc('save_inequality_answer', { p_user: user.id, p_request: body.requestId, p_question: body.questionId, p_answer: answer, p_correct: result.correct, p_result: result.correct ? 'correct' : result.valid ? 'try_again' : 'invalid' });
+      if (error) throw error;
+      return reply({ result, progress });
     }
     if (body.action === 'challenge_new') {
       let previous = '';

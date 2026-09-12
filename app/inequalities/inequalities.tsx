@@ -9,7 +9,7 @@ import { solveInequality, type InequalitySolution } from '@/lib/inequalities';
 
 const EXAMPLES = ['2x + 5 ≤ 17', '-3x + 6 > 12', '-2 < x ≤ 5', 'x < -2 or x ≥ 3'];
 
-function NumberLine({ solution }: { solution: InequalitySolution }) {
+export function NumberLine({ solution }: { solution: InequalitySolution }) {
   const endpoints = [...new Map(solution.intervals.flatMap(i => [i.lower, i.upper]).filter((x): x is Fraction => x !== null).map(x => [x.toString(), x])).values()].sort((a, b) => a.sub(b).n < 0n ? -1 : a.equals(b) ? 0 : 1);
   // Exact labels with schematic spacing keep tiny fractions and large bounds distinct.
   const ticks = endpoints.length === 1 ? [endpoints[0].sub(new Fraction(1)), endpoints[0], endpoints[0].add(new Fraction(1))] : endpoints.length ? endpoints : [new Fraction(-1), new Fraction(0), new Fraction(1)];

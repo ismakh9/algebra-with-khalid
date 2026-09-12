@@ -130,3 +130,5 @@ Built with React, TypeScript, Vinext/Vite, the provided shadcn primitives, and L
 ### Inequalities
 
 Open `/inequalities` locally or `inequalities.html` on GitHub Pages. The equation input also forwards inequalities to that page. It supports one-variable linear inequalities with `<`, `<=`, `>`, `>=`, `≤`, or `≥`, including chained comparisons and `and` / `or`. Results use exact fractional interval endpoints and accessible number-line diagrams with schematic spacing. Nonlinear expressions and variable denominators are rejected explicitly. Inequality views are saved under the Inequalities topic; equation practice grading is unchanged.
+
+The Challenge page offers Equations and Inequalities tabs. Each has its own account-saved progression. Inequality questions are generated and graded by the authenticated activity service; equivalent fractions and interval unions are accepted. A correct answer reveals the interval and number-line graph. Apply `202609120001_inequality_challenges.sql` and deploy the updated `school-activity` function before publishing this interface.
