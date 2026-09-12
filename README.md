@@ -126,3 +126,7 @@ Lint targets the application and tests. The generated shadcn component catalog r
 - `tests/challenges.test.ts`: difficulty, variety, answer validation, and progression coverage.
 
 Built with React, TypeScript, Vinext/Vite, the provided shadcn primitives, and Lucide icons. The full source and lockfile are included. The same source supports both local use and the hosted website.
+
+### Inequalities
+
+Open `/inequalities` locally or `inequalities.html` on GitHub Pages. The equation input also forwards inequalities to that page. It supports one-variable linear inequalities with `<`, `<=`, `>`, `>=`, `≤`, or `≥`, including chained comparisons and `and` / `or`. Results use exact fractional interval endpoints and accessible number-line diagrams with schematic spacing. Nonlinear expressions and variable denominators are rejected explicitly. Inequality views are saved under the Inequalities topic; equation practice grading is unchanged.

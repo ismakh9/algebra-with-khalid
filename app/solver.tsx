@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import './inequalities/navigation.css';
+import { pageUrl } from '@/lib/school';
 import { DocumentLink } from '@/components/document-link';
 import { AccountMenu, useSchoolAuth } from '@/components/school-auth';
 import { useActivityRecorder } from '@/components/school-activity';
@@ -136,6 +138,10 @@ export default function Home() {
 
   const runSolve = useCallback(
     (equation: string, options?: { all?: boolean; scroll?: boolean }) => {
+      if (/[<>≤≥]/.test(equation)) {
+        window.location.assign(`${pageUrl('/inequalities', process.env.NEXT_PUBLIC_BASE_PATH ?? '')}?q=${encodeURIComponent(equation)}`);
+        return { ok: true, equation, steps: 0, answer: 'Opening the inequality solver.' };
+      }
       setInput(equation);
       record('solve', equation);
       try {
@@ -477,7 +483,7 @@ export default function Home() {
 
   return (
     <div className="site-shell">
-      <header className="site-header with-challenge">
+      <header className="site-header with-challenge with-inequalities">
         <a className="brand" href="#top" aria-label="Algebra with Khalid home">
           <span className="brand-mark" aria-hidden="true">
             x<span>·</span>
@@ -489,6 +495,7 @@ export default function Home() {
         <nav aria-label="Main navigation">
           <button onClick={() => setModal('about')}>How it works</button>
           <button onClick={() => setModal('examples')}>Examples</button>
+          <DocumentLink href="/inequalities" className="challenge-link">Inequalities</DocumentLink>
           <DocumentLink href="/challenge" className="challenge-link">
             Challenge
           </DocumentLink>

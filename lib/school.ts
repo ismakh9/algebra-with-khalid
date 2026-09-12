@@ -10,7 +10,7 @@ export function schoolEmail(value: string): string | null {
 }
 
 export const QUESTION_TOPICS = [
-  'One-step equations', 'Two-step equations', 'Parentheses', 'Variables on both sides',
+  'Inequalities', 'One-step equations', 'Two-step equations', 'Parentheses', 'Variables on both sides',
   'Fractions', 'Decimals', 'Negative numbers', 'No solution', 'All real numbers', 'Unsupported input',
 ] as const;
 export type QuestionTopic = typeof QUESTION_TOPICS[number];
@@ -37,6 +37,6 @@ export type TeacherDashboard = {
   total: number;
 };
 
-export function pageUrl(route: '/' | '/login' | '/dashboard' | '/challenge', basePath = '') {
+export function pageUrl(route: '/' | '/login' | '/dashboard' | '/challenge' | '/inequalities', basePath = '') {
   return `${basePath}${route === '/' ? '/' : `${route}${basePath ? '.html' : ''}`}`;
 }

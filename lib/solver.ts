@@ -380,6 +380,12 @@ function parseEquation(raw: string) {
     right = new Parser(rhs).parse();
   return { input, variable, left, right };
 }
+/** Reuse the exact linear parser without changing equation-solving behavior. */
+export function linearRelation(raw: string) {
+  const { variable, left, right } = parseEquation(raw);
+  return { variable, left: total(expand(left)), right: total(expand(right)) };
+}
+
 export function solveEquation(raw: string): Solution {
   const {
     input,

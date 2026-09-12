@@ -1,0 +1,5 @@
+/* Make room for the added page link on narrow screens. */
+@media (max-width: 760px) {
+  .with-inequalities { height: auto; min-height: 98px; padding-top: 18px; padding-bottom: 18px; gap: 18px; flex-wrap: wrap; }
+  .with-inequalities nav { flex-wrap: wrap; }
+}
